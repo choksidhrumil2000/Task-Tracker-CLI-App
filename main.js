@@ -5,14 +5,14 @@ const fs = require("fs");
 //CONSTANTS...............
 const STATUS = {
     "TODO":"to-do",
-    "INPROGRESS":"in-progress",
+    "IN_PROGRESS":"in-progress",
     "DONE":"done"
 }
 
 const COMMANDS = [
-    "add",
-    "update",
-    "delete",
+    "add-task",
+    "update-task",
+    "delete-task",
     "mark-in-progress",
     "mark-done",
     "list",
@@ -59,9 +59,9 @@ const rl = readline.createInterface({
         }
         //Functionalities.............................................
         switch(args[1]){
-            case "add": addItem(args[2]);break;
-            case "update": updateItem(args[2], args[3]); break;
-            case "delete":deleteItem(args[2]);break;
+            case "add-task": addItem(giveTask(args,2));break;
+            case "update-task": updateItem(args[2], giveTask(args,3)); break;
+            case "delete-task":deleteItem(args[2]);break;
             case "mark-in-progress":markInProgress(args[2]);break;
             case "mark-done":markDone(args[2]);break;
             case "list":listItems(args[2]);break;
@@ -73,6 +73,19 @@ const rl = readline.createInterface({
   });
 })();
 
+
+//Gives Whole Task.....................................................
+function giveTask(args,idx) {
+    let str = '';
+        for(let i=idx;i<args.length;i++){
+            for(let j=0;j<args[i].length;j++){
+                if((args[i][j] > 'a' && args[i][j] < 'z') || (args[i][j] > 'A' && args[i][j] < 'Z') || args[i][j] === ' ')
+                    str+=args[i][j];
+            }   
+        }
+    return str;
+}
+
 //Show Command List......................................................
 
 function showCommandsList(){
@@ -80,11 +93,11 @@ function showCommandsList(){
 `-------------------------------------------------------------------------------
 | ==>exit - For Exiting the Program                                             |
 | ==>task-cli - By using this you can start to use following functionalities    |
-| -->add - You can add task.                                                    |
+| -->add-task - You can add task.                                                    |
 |        - example: "task-cli add <task-description>"                           |   
-| -->update - You can Update Particular Task.                                   | 
+| -->update-task - You can Update Particular Task.                                   | 
 |           - example: "task-cli update <id> <task-description>"                |
-| -->delete - You can delete a Particular Task.                                 |
+| -->delete-task - You can delete a Particular Task.                                 |
 |           - example: "task-cli delete <id>"                                   |
 | -->mark-in-progress - You can Mark a Task In Progress.                        |
 |                     - example: "task-cli mark-in-progress <id>"               |
@@ -171,6 +184,9 @@ function updateItem(idNo,item) {
     if(!idNo){
         console.log("Please mention id of task!!");
         return;
+    }else if(!parseInt(idNo)){
+        console.log("SOmething's Wrong with IDNO");
+        return;
     }
     if(!item){
         console.log("Please, Add task you want to Update!!!");
@@ -203,6 +219,9 @@ function deleteItem(idNo) {
     if(!idNo){
         console.log("Please Mention ID which You want to delete!!!");
         return;
+    }else if(!parseInt(idNo)){
+        console.log("SOmething's Wrong with IDNO");
+        return;
     }
     let idx = giveIndex(idNo);
     if(idx === -1){
@@ -229,6 +248,9 @@ function markInProgress(idNo) {
     if(!idNo){
         console.log("Mention id of task which you want to mark!!!");
         return;
+    }else if(!parseInt(idNo)){
+        console.log("SOmething's Wrong with IDNO");
+        return;
     }
     let idx = giveIndex(idNo);
     if(idx === -1){
@@ -251,6 +273,9 @@ function markInProgress(idNo) {
 function markDone(idNo) {
     if(!idNo){
         console.log("Mention id Which You want to mark!!");
+        return;
+    }else if(!parseInt(idNo)){
+        console.log("SOmething's Wrong with IDNO");
         return;
     }
     let idx = giveIndex(idNo);
