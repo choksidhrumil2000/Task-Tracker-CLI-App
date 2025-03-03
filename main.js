@@ -3,9 +3,9 @@ const data = require('./myData.js');
 // const { log } = require('console');
 
 const STATUS = {
-    "TODO":"TODO",
-    "INPROGRESS":"INPROGRESS",
-    "DONE":"DONE"
+    "TODO":"to-do",
+    "INPROGRESS":"in-progress",
+    "DONE":"done"
 }
 
 const COMMANDS = [
@@ -68,6 +68,7 @@ const rl = readline.createInterface({
             case "delete":deleteItem(args[2]);break;
             case "mark-in-progress":markInProgress(args[2]);break;
             case "mark-done":markDone(args[2]);break;
+            case "list":listItems(args[2]);break;
         }
         if (askAgain) loop();
         // else rl.close();
@@ -151,4 +152,15 @@ function markDone(id) {
     }
     data[idx].status = STATUS.DONE;
     console.log(`Task marked as Done Successfully,ID:${id}`);
+}
+
+function listItems(fil) {
+    let tmp_data = [];
+    // console.log(fil);
+    if(fil !== undefined){
+        tmp_data = data.filter((item)=>item.status === fil);
+    }else{
+        tmp_data = data;
+    }
+    console.log(tmp_data);
 }
