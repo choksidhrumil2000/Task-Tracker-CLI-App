@@ -1,6 +1,9 @@
 const readline = require('readline');
-const data = require('./myData.js');
-// const { log } = require('console');
+// const data = require('./myData.js');
+const fs = require("fs");
+
+let data = fs.readFileSync("myData.json");
+let myJsonData = JSON.parse(data);
 
 const STATUS = {
     "TODO":"to-do",
@@ -15,6 +18,7 @@ const COMMANDS = [
     "mark-in-progress",
     "mark-done",
     "list",
+    "clear",
 ];
 
 let id = 1;
@@ -69,6 +73,7 @@ const rl = readline.createInterface({
             case "mark-in-progress":markInProgress(args[2]);break;
             case "mark-done":markDone(args[2]);break;
             case "list":listItems(args[2]);break;
+            case "clear":clearData();break;
         }
         if (askAgain) loop();
         // else rl.close();
@@ -89,6 +94,11 @@ function isCommandValid(cmd) {
 
 
 function getId(){
+    if(myJsonData.length === 0){
+        id = 1;
+    }else{
+        id = myJsonData[myJsonData.length-1].id+1;
+    }
     return id;
 }
 
@@ -101,14 +111,17 @@ function addItem(item) {
         updatedAt:new Date(),
     }
     
-    data.push(obj);
+    myJsonData.push(obj);
+    writeDataInFile(myJsonData);
+    
+    // data.push(obj);
+    // console.log(data);
     console.log(`Task Added Successfully ID:${id}`);
-    console.log(data);
-    id++;   
+    // getId()++;   
 }
 
 function giveIndex(id) {
-    return data.findIndex((item)=>item.id === parseInt(id));
+    return myJsonData.findIndex((item)=>item.id === parseInt(id));
 }
 
 function updateItem(id,item) {
@@ -117,8 +130,9 @@ function updateItem(id,item) {
         console.log("Task Not Found!!");
         return;
     }
-    data[idx].description = item;
-    data[idx].updatedAt = new Date();
+    myJsonData[idx].description = item;
+    myJsonData[idx].updatedAt = new Date();
+    writeDataInFile(myJsonData);
 
     console.log(`Task Updated Successfully,ID:${id}`);
 }
@@ -129,7 +143,9 @@ function deleteItem(id) {
         console.log("Task Not Found!!");
         return;
     }
-    data.splice(idx,1);
+    myJsonData.splice(idx,1);
+
+    writeDataInFile(myJsonData);
 
     console.log(`Task Deleted Successfully,ID:${id}`);
 }
@@ -140,7 +156,8 @@ function markInProgress(id) {
         console.log("Task Not Found!!");
         return ;
     }
-    data[idx].status = STATUS.INPROGRESS;
+    myJsonData[idx].status = STATUS.INPROGRESS;
+    writeDataInFile(myJsonData);
     console.log(`Task marked as MarkInProgress Successfully,ID:${id}`);
 }
 
@@ -150,7 +167,8 @@ function markDone(id) {
         console.log("Task Not Found!!");
         return ;
     }
-    data[idx].status = STATUS.DONE;
+    myJsonData[idx].status = STATUS.DONE;
+    writeDataInFile(myJsonData);
     console.log(`Task marked as Done Successfully,ID:${id}`);
 }
 
@@ -158,9 +176,25 @@ function listItems(fil) {
     let tmp_data = [];
     // console.log(fil);
     if(fil !== undefined){
-        tmp_data = data.filter((item)=>item.status === fil);
+        tmp_data = myJsonData.filter((item)=>item.status === fil);
     }else{
-        tmp_data = data;
+        tmp_data = myJsonData;
     }
     console.log(tmp_data);
+}
+
+function writeDataInFile(jsonObj){
+    let data = JSON.stringify(jsonObj);
+    fs.writeFile("myData.json", data, (err) => {
+        // Error checking
+        if (err) throw err;
+        // console.log("New data added");
+    });
+}
+
+function clearData(){
+    myJsonData = [];
+    writeDataInFile(myJsonData);
+    console.log("Data Cleared Successfully");
+
 }
