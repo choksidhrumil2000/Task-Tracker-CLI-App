@@ -1,10 +1,8 @@
+//Imports..................
 const readline = require('readline');
-// const data = require('./myData.js');
 const fs = require("fs");
 
-let data = fs.readFileSync("myData.json");
-let myJsonData = JSON.parse(data);
-
+//CONSTANTS...............
 const STATUS = {
     "TODO":"to-do",
     "INPROGRESS":"in-progress",
@@ -21,39 +19,29 @@ const COMMANDS = [
     "clear",
 ];
 
-let id = 1;
-let command = "exit";
+//GLOBAL VARIABLES................
 let args = [];
-let askAgain = false;
+let askAgain = true;
 
-// const arguments = process.argv;
+let myJsonData = [];
+
+if(fs.existsSync('myData.json')){
+    let data = fs.readFileSync("myData.json");
+    myJsonData = JSON.parse(data);
+    myJsonData.sort((a,b)=>a.id-b.id);
+}else{
+    fs.writeFileSync('myData.json', '[]');
+    myJsonData = [];
+}
+
 
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
 
-// rl.question('Command: ', (input) => {
-//     if(isCommandValid(input)){
-//         command = input;
-//     }else{
-//         command = "invalid command";
-//     }
-//     rl.close();
-// });
-// while(command !== "exit"){
-        
-//         rl.question('Command: ', (input) => {
-//             if(isCommandValid(input)){
-//                 command = input;
-//             }else{
-//                 command = "invalid Command";   
-//             }
-//         rl.close();
-//         });   
 
-// }
-
+//Main Function Where Whole App Resides...................................................
 (function loop() {
   rl.question("command: ", (cmd) => {
     const isValid = isCommandValid(cmd);
@@ -65,7 +53,11 @@ const rl = readline.createInterface({
             rl.close()
             return;
         }
-
+        //For Help Command..................................
+        if(args[0] === 'help'){
+            showCommandsList();
+        }
+        //Functionalities.............................................
         switch(args[1]){
             case "add": addItem(args[2]);break;
             case "update": updateItem(args[2], args[3]); break;
@@ -75,36 +67,82 @@ const rl = readline.createInterface({
             case "list":listItems(args[2]);break;
             case "clear":clearData();break;
         }
-        if (askAgain) loop();
-        // else rl.close();
+       
     }
+     if (askAgain) loop();
   });
 })();
 
+//Show Command List......................................................
 
+function showCommandsList(){
+    let str = 
+`-------------------------------------------------------------------------------
+| ==>exit - For Exiting the Program                                             |
+| ==>task-cli - By using this you can start to use following functionalities    |
+| -->add - You can add task.                                                    |
+|        - example: "task-cli add <task-description>"                           |   
+| -->update - You can Update Particular Task.                                   | 
+|           - example: "task-cli update <id> <task-description>"                |
+| -->delete - You can delete a Particular Task.                                 |
+|           - example: "task-cli delete <id>"                                   |
+| -->mark-in-progress - You can Mark a Task In Progress.                        |
+|                     - example: "task-cli mark-in-progress <id>"               |
+| -->mark-done - You can mark Done a particular Task.                           |
+|              - example: "task-cli mark-done <id>"                             | 
+| -->list - You can List Items and List With Status Filter                      |
+|         - example: "task-cli list <status-filter-if-any>"                     |
+| -->clear - You can Clear all the data or reset all the Data                   |
+|          -example: "task-cli clear"                                           |
+---------------------------------------------------------------------------------`;
+    console.log(str);
+}
+
+//Check if Command is valid or Not...........................
 function isCommandValid(cmd) {
+    if(cmd === ""){
+        console.log("Please Write Command!! or write 'help'");
+        return true;
+    }
     args = cmd.split(" ");
-    if(!cmd && (args[0] !== "exit" && args[0] !== "task-cli") ||(args[1] && !COMMANDS.includes(args[1]))){
+    if((cmd !== "" && (args[0] !== "exit" && args[0] !== "task-cli" &&  args[0] !== 'help'))){
         console.log("invalid Command!!");
         return false;
-    }
+    }else if(args[0] === 'task-cli'){
+            if(!args[1]){
+                console.log("Use Help so that you can utilize this command!!");
+                return false;
+            }else if((args[1] && !COMMANDS.includes(args[1]))){
+                console.log("use help command to use correct functionality!!");
+                return false;
+            }
+    }else if((args[0] === 'help' || args[0] === 'exit') && (args[1])){
+        console.log("Invalid Arguments!!! No Arguments needed in this commands!!!");
+        return false;
+    } 
     return true;
 }
 
-
-
-function getId(){
+//Returns the id needed for CRUD OPS..........................
+function getLastId(){
+    let idd = 0;
     if(myJsonData.length === 0){
-        id = 1;
+        idd = 0;
     }else{
-        id = myJsonData[myJsonData.length-1].id+1;
+        idd = myJsonData[myJsonData.length-1].id;
     }
-    return id;
+    return idd;
 }
 
+//Adds The Item to the File as well as in current memory.......................
 function addItem(item) {
+    if(!item){
+        console.log("Please, Add task you want to add!!!");
+        return;
+    }
+    let idNo = getLastId();
     let obj = {
-        id:getId(),
+        id:(++idNo),
         description:item,
         status:STATUS.TODO,
         createdAt:new Date(),
@@ -112,89 +150,172 @@ function addItem(item) {
     }
     
     myJsonData.push(obj);
-    writeDataInFile(myJsonData);
+    try{
+        writeDataInFile(myJsonData);
+    }catch(e){
+        //reversing the Action...................
+        console.log("cannot Update Data in Particular FIle");
+        myJsonData.pop();
+    }
     
-    // data.push(obj);
-    // console.log(data);
-    console.log(`Task Added Successfully ID:${id}`);
-    // getId()++;   
+    console.log(`Task Added Successfully ID:${idNo}`);
 }
 
-function giveIndex(id) {
-    return myJsonData.findIndex((item)=>item.id === parseInt(id));
+//Gives the Index of Particular Task.....................
+function giveIndex(idNo) {
+    return myJsonData.findIndex((item)=>item.id === parseInt(idNo));
 }
 
-function updateItem(id,item) {
-    let idx = giveIndex(id);
+//Updates the particular Item in File as well as current memory................................
+function updateItem(idNo,item) {
+    if(!idNo){
+        console.log("Please mention id of task!!");
+        return;
+    }
+    if(!item){
+        console.log("Please, Add task you want to Update!!!");
+        return;
+    }
+    let idx = giveIndex(idNo);
     if(idx === -1){
         console.log("Task Not Found!!");
         return;
     }
+    let oldDescription = myJsonData[idx].description;
+    let lastUpdated = myJsonData[idx].updatedAt;
+
     myJsonData[idx].description = item;
     myJsonData[idx].updatedAt = new Date();
-    writeDataInFile(myJsonData);
 
-    console.log(`Task Updated Successfully,ID:${id}`);
+    try{
+        writeDataInFile(myJsonData);
+    }catch(e){
+        //reversing the Action....................
+        console.log("cannot Update Data in Particular FIle");
+        myJsonData[idx].description = oldDescription;
+        myJsonData[idx].updatedAt = lastUpdated;
+    }
+    console.log(`Task Updated Successfully,ID:${idNo}`);
 }
 
-function deleteItem(id) {
-    let idx = giveIndex(id);
+//Deletes the Particular Item in Data............................
+function deleteItem(idNo) {
+    if(!idNo){
+        console.log("Please Mention ID which You want to delete!!!");
+        return;
+    }
+    let idx = giveIndex(idNo);
     if(idx === -1){
         console.log("Task Not Found!!");
         return;
     }
+    let oldItem = myJsonData.slice(idx,idx+1);
     myJsonData.splice(idx,1);
 
-    writeDataInFile(myJsonData);
+    try{
+        writeDataInFile(myJsonData);
+    }catch(e){
+        //reversing the Action....................
+        console.log("cannot Update Data in Particular FIle");
+        myJsonData.push(oldItem);
 
-    console.log(`Task Deleted Successfully,ID:${id}`);
+    }
+    
+    console.log(`Task Deleted Successfully,ID:${idNo}`);
 }
 
-function markInProgress(id) {
-    let idx = giveIndex(id);
+// Marks in Progress a particular Task.............................
+function markInProgress(idNo) {
+    if(!idNo){
+        console.log("Mention id of task which you want to mark!!!");
+        return;
+    }
+    let idx = giveIndex(idNo);
     if(idx === -1){
         console.log("Task Not Found!!");
         return ;
     }
+    let oldStatus = myJsonData[idx].status;
     myJsonData[idx].status = STATUS.INPROGRESS;
-    writeDataInFile(myJsonData);
-    console.log(`Task marked as MarkInProgress Successfully,ID:${id}`);
+    try{
+        writeDataInFile(myJsonData);
+    }catch(e){
+        //reversing the Action....................
+        console.log("cannot Update Data in Particular FIle");
+        myJsonData[idx].status = oldStatus;
+    }
+    console.log(`Task marked as InProgress Successfully,ID:${idNo}`);
 }
 
-function markDone(id) {
-    let idx = giveIndex(id);
+//Marks Done a Particular Task.......................................
+function markDone(idNo) {
+    if(!idNo){
+        console.log("Mention id Which You want to mark!!");
+        return;
+    }
+    let idx = giveIndex(idNo);
     if(idx === -1){
         console.log("Task Not Found!!");
         return ;
     }
+    let oldStatus = myJsonData[idx].status;
     myJsonData[idx].status = STATUS.DONE;
-    writeDataInFile(myJsonData);
-    console.log(`Task marked as Done Successfully,ID:${id}`);
+    try{
+        writeDataInFile(myJsonData);
+    }catch(e){
+        //reversing the Action....................
+        console.log("cannot Update Data in Particular FIle");
+        myJsonData[idx].status = oldStatus;
+    }
+    console.log(`Task marked as Done Successfully,ID:${idNo}`);
 }
 
+//List Items if it has a filter or not.................................
 function listItems(fil) {
     let tmp_data = [];
-    // console.log(fil);
+
+
     if(fil !== undefined){
-        tmp_data = myJsonData.filter((item)=>item.status === fil);
+        if(checkIfFilValid(fil)){
+            tmp_data = myJsonData.filter((item)=>item.status === fil);
+        }else{
+            console.log("Filter is Not Valid!!!");
+            return;
+        }
     }else{
         tmp_data = myJsonData;
     }
+
     console.log(tmp_data);
 }
 
+//Check if Filter is Valid or not....................................
+function checkIfFilValid(fil) {
+    let vals = Object.values(STATUS);
+    if(vals.includes(fil))
+        return true;
+    return false;
+}
+
+//Write a Data to File....................................
 function writeDataInFile(jsonObj){
     let data = JSON.stringify(jsonObj);
     fs.writeFile("myData.json", data, (err) => {
         // Error checking
         if (err) throw err;
-        // console.log("New data added");
     });
 }
 
+//Clears All the Data to Particular FIle.....................
 function clearData(){
+    let oldData = myJsonData;
     myJsonData = [];
-    writeDataInFile(myJsonData);
+    try{
+        writeDataInFile(myJsonData);
+    }catch(e){
+        //reversing the Action....................
+        console.log("cannot Update Data in Particular FIle");
+        myJsonData = oldData;
+    }
     console.log("Data Cleared Successfully");
-
 }
