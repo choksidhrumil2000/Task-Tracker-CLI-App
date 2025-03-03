@@ -1,5 +1,6 @@
 const readline = require('readline');
 const data = require('./myData.js');
+// const { log } = require('console');
 
 const STATUS = {
     "TODO":"TODO",
@@ -62,7 +63,11 @@ const rl = readline.createInterface({
         }
 
         switch(args[1]){
-            case "add": add(args[2]);break;
+            case "add": addItem(args[2]);break;
+            case "update": updateItem(args[2], args[3]); break;
+            case "delete":deleteItem(args[2]);break;
+            case "mark-in-progress":markInProgress(args[2]);break;
+            case "mark-done":markDone(args[2]);break;
         }
         if (askAgain) loop();
         // else rl.close();
@@ -73,7 +78,7 @@ const rl = readline.createInterface({
 
 function isCommandValid(cmd) {
     args = cmd.split(" ");
-    if(args[0] !== "exit" && args[0] !== "task-cli" ||(args[1] && !COMMANDS.includes(args[1]))){
+    if(!cmd && (args[0] !== "exit" && args[0] !== "task-cli") ||(args[1] && !COMMANDS.includes(args[1]))){
         console.log("invalid Command!!");
         return false;
     }
@@ -86,7 +91,7 @@ function getId(){
     return id;
 }
 
-function add(item) {
+function addItem(item) {
     let obj = {
         id:getId(),
         description:item,
@@ -99,4 +104,51 @@ function add(item) {
     console.log(`Task Added Successfully ID:${id}`);
     console.log(data);
     id++;   
+}
+
+function giveIndex(id) {
+    return data.findIndex((item)=>item.id === parseInt(id));
+}
+
+function updateItem(id,item) {
+    let idx = giveIndex(id);
+    if(idx === -1){
+        console.log("Task Not Found!!");
+        return;
+    }
+    data[idx].description = item;
+    data[idx].updatedAt = new Date();
+
+    console.log(`Task Updated Successfully,ID:${id}`);
+}
+
+function deleteItem(id) {
+    let idx = giveIndex(id);
+    if(idx === -1){
+        console.log("Task Not Found!!");
+        return;
+    }
+    data.splice(idx,1);
+
+    console.log(`Task Deleted Successfully,ID:${id}`);
+}
+
+function markInProgress(id) {
+    let idx = giveIndex(id);
+    if(idx === -1){
+        console.log("Task Not Found!!");
+        return ;
+    }
+    data[idx].status = STATUS.INPROGRESS;
+    console.log(`Task marked as MarkInProgress Successfully,ID:${id}`);
+}
+
+function markDone(id) {
+    let idx = giveIndex(id);
+    if(idx === -1){
+        console.log("Task Not Found!!");
+        return ;
+    }
+    data[idx].status = STATUS.DONE;
+    console.log(`Task marked as Done Successfully,ID:${id}`);
 }
