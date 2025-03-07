@@ -245,6 +245,7 @@ function deleteItem(idNo) {
         //reversing the Action....................
         console.log("cannot Update Data in Particular FIle");
         myJsonData.push(oldItem);
+        myJsonData.sort((a,b)=>a.id-b.id);
     }
 
     console.log(`Task Deleted Successfully,ID:${idNo}`);
@@ -326,15 +327,6 @@ function checkIfFilValid(fil) {
     if (vals.includes(fil))
         return true;
     return false;
-}
-
-//Write a Data to File....................................
-async function writeDataInFile(jsonObj) {
-    let data = JSON.stringify(jsonObj);
-    await fs.writeFileSync("myData.json", data, (err) => {
-        // Error checking
-        if (err) throw err;
-    });
 }
 
 //Clears All the Data to Particular FIle.....................
