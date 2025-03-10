@@ -329,6 +329,15 @@ function checkIfFilValid(fil) {
     return false;
 }
 
+//Write a Data to File....................................
+async function writeDataInFile(jsonObj) {
+    let data = JSON.stringify(jsonObj);
+    await fs.writeFileSync("myData.json", data, (err) => {
+        // Error checking..
+        if (err) throw err;
+    });
+}
+
 //Clears All the Data to Particular FIle.....................
 function clearData() {
     let oldData = myJsonData;
