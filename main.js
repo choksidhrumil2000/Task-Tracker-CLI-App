@@ -332,7 +332,7 @@ function checkIfFilValid(fil) {
 async function writeDataInFile(jsonObj) {
     let data = JSON.stringify(jsonObj);
     await fs.writeFileSync("myData.json", data, (err) => {
-        // Error checking
+        // Error checking..
         if (err) throw err;
     });
 }
